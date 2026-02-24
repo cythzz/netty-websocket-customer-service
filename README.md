@@ -1,3 +1,11 @@
+> **⚠️ This repository is legacy and no longer actively maintained.**
+>
+> Server-side transports are now handled natively by the core runtime, Spring Boot starter, and Quarkus extension in [Atmosphere 4](https://github.com/Atmosphere/atmosphere).
+>
+> **→ [github.com/Atmosphere/atmosphere](https://github.com/Atmosphere/atmosphere)**
+
+---
+
 ## Nettosphere: A Java WebSocket and HTTP server powered by the [Atmosphere Framework](http://github.com/Atmosphere/atmosphere) and the [Netty Framework](http://netty.io/)
 
 The easiest way to get started with NettoSphere is to download a sample and start it. [Or look at the Javadoc](http://atmosphere.github.io/nettosphere/apidocs/). You can download one of our [sample](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.atmosphere.nettosphere.samples%22) distribution.
