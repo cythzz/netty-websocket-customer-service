@@ -11,15 +11,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 final class SessionRegistry {
     private final ObjectMapper objectMapper;
+    private final ServiceMetrics metrics;
     private final Map<String, Channel> channelsBySession = new ConcurrentHashMap<>();
     private final Map<String, Channel> channelsByUser = new ConcurrentHashMap<>();
     private final Map<String, CustomerSession> customerSessions = new ConcurrentHashMap<>();
 
     SessionRegistry(ObjectMapper objectMapper) {
+        this(objectMapper, new ServiceMetrics());
+    }
+
+    SessionRegistry(ObjectMapper objectMapper, ServiceMetrics metrics) {
         this.objectMapper = objectMapper;
+        this.metrics = metrics;
     }
 
     void bind(ConnectionIdentity identity, Channel channel) {
+        metrics.connected();
         Channel previousUserChannel = channelsByUser.put(identity.userId(), channel);
         if (previousUserChannel != null && previousUserChannel != channel) {
             write(previousUserChannel, "REPLACED", Map.of("reason", "same user reconnected"));
@@ -65,6 +72,7 @@ final class SessionRegistry {
         String agentId = session == null ? null : session.agentUserId;
         Channel agentChannel = agentId == null ? null : channelsByUser.get(agentId);
         if (agentChannel == null || !agentChannel.isActive()) {
+            metrics.handoffRequired();
             write(channelsBySession.get(sender.sessionId()), "HANDOFF_REQUIRED", Map.of(
                 "sessionId", sender.sessionId(), "message", "暂无在线客服，消息已进入人工排队队列"
             ));

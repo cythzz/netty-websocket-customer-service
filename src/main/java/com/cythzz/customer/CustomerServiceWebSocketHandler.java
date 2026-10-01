@@ -12,10 +12,12 @@ import java.util.Map;
 final class CustomerServiceWebSocketHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
     private final ObjectMapper objectMapper;
     private final SessionRegistry registry;
+    private final ServiceMetrics metrics;
 
-    CustomerServiceWebSocketHandler(ObjectMapper objectMapper, SessionRegistry registry) {
+    CustomerServiceWebSocketHandler(ObjectMapper objectMapper, SessionRegistry registry, ServiceMetrics metrics) {
         this.objectMapper = objectMapper;
         this.registry = registry;
+        this.metrics = metrics;
     }
 
     @Override
@@ -30,6 +32,7 @@ final class CustomerServiceWebSocketHandler extends SimpleChannelInboundHandler<
                 return;
             }
             if (idleEvent.state() == IdleState.READER_IDLE) {
+                metrics.heartbeatTimeout();
                 context.writeAndFlush(new CloseWebSocketFrame(1001, "heartbeat timeout"))
                     .addListener(future -> context.close());
                 return;
@@ -53,6 +56,7 @@ final class CustomerServiceWebSocketHandler extends SimpleChannelInboundHandler<
             registry.write(context.channel(), "ERROR", Map.of("message", "only text messages are supported"));
             return;
         }
+        metrics.inboundMessage();
         InboundMessage message = objectMapper.readValue(textFrame.text(), InboundMessage.class);
         String type = message.type() == null ? "" : message.type().trim().toUpperCase();
         ConnectionIdentity identity = context.channel().attr(HandshakeQueryHandler.IDENTITY).get();

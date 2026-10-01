@@ -11,10 +11,12 @@ import io.netty.handler.timeout.IdleStateHandler;
 final class CustomerChannelInitializer extends ChannelInitializer<SocketChannel> {
     private final ObjectMapper objectMapper;
     private final SessionRegistry registry;
+    private final ServiceMetrics metrics;
 
-    CustomerChannelInitializer(ObjectMapper objectMapper, SessionRegistry registry) {
+    CustomerChannelInitializer(ObjectMapper objectMapper, SessionRegistry registry, ServiceMetrics metrics) {
         this.objectMapper = objectMapper;
         this.registry = registry;
+        this.metrics = metrics;
     }
 
     @Override
@@ -22,9 +24,10 @@ final class CustomerChannelInitializer extends ChannelInitializer<SocketChannel>
         channel.pipeline()
             .addLast(new HttpServerCodec())
             .addLast(new HttpObjectAggregator(64 * 1024))
+            .addLast(new HealthMetricsHandler(metrics))
             .addLast(new IdleStateHandler(65, 25, 0))
             .addLast(new HandshakeQueryHandler())
             .addLast(new WebSocketServerProtocolHandler("/ws", null, true, 64 * 1024))
-            .addLast(new CustomerServiceWebSocketHandler(objectMapper, registry));
+            .addLast(new CustomerServiceWebSocketHandler(objectMapper, registry, metrics));
     }
 }
