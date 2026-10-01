@@ -15,6 +15,7 @@
 nbproject
 .DS_Store
 target
+.m2-repository/
 test-output
 nbactions.xml
 samples/gwt-demo/src/main/webapp/WEB-INF/classes/

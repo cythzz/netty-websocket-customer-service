@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><title>Netty 在线客服测试页</title>
+<style>body{max-width:760px;margin:30px auto;font:15px system-ui}input,select,button{margin:4px;padding:8px}#log{height:360px;overflow:auto;padding:12px;background:#111;color:#d7ffd7;white-space:pre-wrap}</style>
+<h1>电商在线客服 WebSocket Demo</h1>
+<div><input id="session" value="order-session-1001" placeholder="sessionId"><input id="user" value="customer-1001" placeholder="userId"><select id="role"><option>CUSTOMER</option><option>AGENT</option></select><button onclick="connect()">连接</button></div>
+<div><input id="target" placeholder="客服回复时填写目标 sessionId"><input id="message" value="我的订单什么时候发货？" size="40"><button onclick="sendChat()">发送</button><button onclick="claim()">客服接入</button></div>
+<pre id="log"></pre>
+<script>
+let socket,retry=0,heartbeat;const log=text=>document.querySelector('#log').textContent+=`${new Date().toLocaleTimeString()} ${text}\n`;
+function connect(){clearInterval(heartbeat);const query=new URLSearchParams({sessionId:document.querySelector('#session').value,userId:document.querySelector('#user').value,role:document.querySelector('#role').value});socket=new WebSocket(`ws://localhost:8080/ws?${query}`);socket.onopen=()=>{retry=0;log('已连接');heartbeat=setInterval(()=>send({type:'HEARTBEAT'}),20000)};socket.onmessage=event=>log(`收到 ${event.data}`);socket.onclose=()=>{clearInterval(heartbeat);const delay=Math.min(1000*2**retry++,15000);log(`连接断开，${delay/1000} 秒后重连`);setTimeout(connect,delay)}}
+function send(payload){if(socket?.readyState===WebSocket.OPEN)socket.send(JSON.stringify(payload))}function sendChat(){send({type:'CHAT',targetSessionId:document.querySelector('#target').value||null,content:document.querySelector('#message').value})}function claim(){send({type:'CLAIM',targetSessionId:document.querySelector('#target').value})}
+</script></html>
